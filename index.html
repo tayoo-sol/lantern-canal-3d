@@ -14,20 +14,47 @@
         display: flex; justify-content: space-between; align-items: center;
         padding: 12px 18px; color: #f5e9c8; pointer-events: none;
         text-shadow: 0 1px 4px rgba(0,0,0,.8); font-size: 18px; font-weight: 600;
-        z-index: 5;
+        z-index: 15; /* above #overlay so mute/pause stay clickable on menu & complete screens */
+        white-space: nowrap;
       }
-      #hud .title { font-size: 15px; letter-spacing: 2px; opacity: .85; }
+      #hud .title { font-size: 15px; letter-spacing: 2px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #hud .right { display: flex; gap: 14px; align-items: center; flex-shrink: 0; }
+      @media (max-width: 640px) {
+        #hud { font-size: 14px; padding: 10px 12px; }
+        #hud .title { font-size: 12px; letter-spacing: 1px; }
+      }
+      #hud button {
+        pointer-events: auto; background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.35); color: #f5e9c8;
+        border-radius: 6px; padding: 4px 10px; font-size: 15px; cursor: pointer;
+      }
+      #hud button:hover { background: rgba(255,255,255,.25); }
       #overlay {
         position: fixed; inset: 0; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; text-align: center;
+        align-items: center; justify-content: center; justify-content: safe center;
+        text-align: center;
         color: #f5e9c8; background: rgba(4, 8, 20, 0.55); z-index: 10;
-        padding: 20px;
+        padding: 20px; overflow-y: auto;
       }
       #overlay h1 { margin: 0 0 8px; font-size: 44px; letter-spacing: 3px; text-shadow: 0 2px 12px rgba(255, 190, 80, .45); }
-      #overlay p { margin: 6px 0; font-size: 17px; max-width: 560px; line-height: 1.5; }
+      #overlay p { margin: 6px 0; font-size: 17px; max-width: 620px; line-height: 1.5; }
       #overlay .keys { font-size: 15px; opacity: .9; }
       #overlay .keys b { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); border-radius: 5px; padding: 2px 8px; }
       #overlay.hidden { display: none; }
+      #overlay .btn {
+        display: inline-block; background: rgba(255,190,80,.16);
+        border: 1px solid rgba(255,214,106,.6); color: #f5e9c8;
+        border-radius: 8px; padding: 10px 20px; font-size: 16px;
+        cursor: pointer; margin: 6px 4px; font-family: inherit;
+      }
+      #overlay .btn:hover { background: rgba(255,190,80,.3); }
+      #overlay .btn:disabled { opacity: .45; cursor: default; }
+      #overlay .btn:disabled:hover { background: rgba(255,190,80,.16); }
+      #overlay .level-grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 14px 0; }
+      #overlay .level-card { min-width: 158px; text-align: center; line-height: 1.6; }
+      #overlay .level-card .stars { font-size: 20px; color: #ffd76a; letter-spacing: 2px; }
+      #overlay .level-card .lock { font-size: 13px; opacity: .75; }
+      #overlay .stars-big { font-size: 34px; color: #ffd76a; letter-spacing: 4px; margin: 4px 0; }
       #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #f5e9c8; font-size: 18px; background: #060a18; z-index: 20; }
       #loading.hidden { display: none; }
       #credit {
@@ -40,16 +67,16 @@
     <div id="app"></div>
     <div id="loading">Loading the canal…</div>
     <div id="hud">
-      <span class="title">🏮 LANTERN CANAL 3D — LEVEL 1</span>
-      <span id="hud-coins">🪙 0 / 6</span>
-      <span id="hud-time">⏱ 0.0s</span>
+      <span class="title" id="hud-title">🏮 LANTERN CANAL 3D — LEVEL 1</span>
+      <span class="right">
+        <span id="hud-mask">🎭 –</span>
+        <span id="hud-coins">🪙 0 / 6</span>
+        <span id="hud-time">⏱ 0.0s</span>
+        <button id="mute-btn" title="Mute (M)">🔊</button>
+        <button id="pause-btn" title="Pause (P)">⏸</button>
+      </span>
     </div>
-    <div id="overlay">
-      <h1>LANTERN CANAL 3D</h1>
-      <p class="intro">Steer your gondola down a foggy Venetian canal at night. Follow the lanterns, collect the coins, and reach the finish gate.</p>
-      <p class="keys intro"><b>←</b> <b>→</b> or <b>A</b> <b>D</b> steer &nbsp;·&nbsp; <b>↑</b> <b>↓</b> or <b>W</b> <b>S</b> speed &nbsp;·&nbsp; <b>R</b> restart</p>
-      <p id="overlay-status">Press ↑ to set off</p>
-    </div>
+    <div id="overlay"></div>
     <div id="credit">Gondola &amp; gondolier models: AI-generated with TRELLIS.2 (MIT) · Built with Three.js</div>
     <script type="module" src="/src/main.js"></script>
   </body>

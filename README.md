@@ -11,8 +11,11 @@ Play it here: https://tayoo-sol.github.io/lantern-canal-3d/
 - **← →** or **A / D** — steer
 - **↑ ↓** or **W / S** — speed up / slow down
 - **R** — restart the level
+- **P** — pause · **M** — mute
 
-Collect all 6 coins for 3 stars. The timer starts when you first speed up.
+Collect coins and the hidden golden mask (1 per level) for up to 3 stars.
+Dodge the bricole posts — hitting one slows you down. Progress and best
+stars are saved in your browser; finishing a level unlocks the next one.
 
 ## Tech
 
@@ -22,7 +25,9 @@ Collect all 6 coins for 3 stars. The timer starts when you first speed up.
   - `public/assets/gondola-hero.glb` — Venetian gondola (black hull, gold trim)
   - `public/assets/gondolier-hero.glb` — masked gondolier with oar
   - Lanterns are procedural for now (a TRELLIS.2 lantern hero asset is planned).
-- Canal, buildings, water, sky, coins and lanterns are procedural Three.js.
+- Canal, buildings, water, sky, coins, masks, lanterns and bricole posts are
+  procedural Three.js. All sound is synthesized Web Audio (no audio files):
+  coin/mask/finish chimes, bump thud, ambient pad + pluck music loop.
 
 ## Develop
 
@@ -30,14 +35,23 @@ Collect all 6 coins for 3 stars. The timer starts when you first speed up.
 npm install
 npm run dev     # local dev server
 npm run build   # builds into docs/ (GitHub Pages source)
-node smoke-test.mjs   # headless Chromium play-through (10 checks)
+node smoke-test.mjs   # headless Chromium play-through (18 checks)
 ```
+
+Debug hooks (in `window.__game`): `setTimeScale(v)` speeds the game clock;
+`setRenderEnabled(false)` skips `renderer.render()` so gameplay logic can be
+tested at full speed when software rendering is slow; `setPixelRatio(v)`
+shrinks the render buffer; `frames` counts completed loop iterations.
 
 ## Status
 
-Milestone 1 (26 Nov 2026): 1 playable level — steering, speed, wall
-collision, 6 collectible coins, finish gate with star rating, restart.
-Not yet: levels 2+, sound, golden-mask collectible, polish.
+Milestone 2 (26 Nov 2026): levels 1–5 with a level-select screen, hidden
+golden mask per level, bricole collision hazards (slowdown + shake + thud),
+saved progress + best stars (localStorage), Web Audio SFX (coin/mask/bump/
+finish) + ambient music loop with mute, lantern glow halos, coin/mask
+sparkle particles, rowing gondolier, pause.
+Not yet: lantern hero GLB (TRELLIS.2 quota — retry 27 Nov), mobile/touch,
+levels 6+.
 
 ## Licence
 
