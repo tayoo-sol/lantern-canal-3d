@@ -1,0 +1,1 @@
+{"dependencies":{"three":"^0.180.0"},"description":"Lantern Canal 3D — a Three.js gondola game through a foggy Venetian canal at night. Entry for the Meshy Z-Axis Awards, Gaming track.","devDependencies":{"vite":"^8.3.6"},"name":"lantern-canal-3d","private":true,"scripts":{"build":"vite build","dev":"vite","preview":"vite preview"},"type":"module","version":"0.1.0"}
