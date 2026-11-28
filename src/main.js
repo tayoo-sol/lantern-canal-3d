@@ -372,6 +372,52 @@ loadModel(`${import.meta.env.BASE_URL}assets/gondolier-hero.glb`, (model) => {
   boat.add(g)
 })
 
+// --- hero lantern GLB (TRELLIS.2, seed 1376886525) ---------------------------
+// Loaded once; every canal lantern clones it. If the load fails,
+// lanternTemplate stays null and makeLantern() falls back to the
+// procedural bulb+cap so the game never breaks.
+let lanternTemplate = null
+loader.load(
+  `${import.meta.env.BASE_URL}assets/lantern-hero.glb`,
+  (gltf) => {
+    const model = gltf.scene
+    // TRELLIS output is ~1.0 m tall, centred on origin, Y-up. Scale it to
+    // ~1.15 m so it reads slightly larger than the old procedural bulb.
+    const box = new THREE.Box3().setFromObject(model)
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    const center = new THREE.Vector3()
+    box.getCenter(center)
+    const scale = 1.15 / Math.max(size.x, size.y, size.z)
+    model.scale.setScalar(scale)
+    model.position.set(-center.x * scale, -center.y * scale, -center.z * scale)
+    // The TRELLIS material has no emissive, so the glass would stay dark at
+    // night. Light it from within: reuse the base-color texture as the
+    // emissive map — the dark iron texels stay dark, the amber glass glows.
+    model.traverse((o) => {
+      if (o.isMesh && o.material) {
+        const mats = Array.isArray(o.material) ? o.material : [o.material]
+        for (const m of mats) {
+          if (m.map && 'emissive' in m) {
+            m.emissive = new THREE.Color(0xff9a2a)
+            m.emissiveMap = m.map
+            m.emissiveIntensity = 0.55
+          }
+        }
+      }
+    })
+    const group = new THREE.Group()
+    group.add(model)
+    group.traverse((o) => { o.userData.heroLantern = true })
+    lanternTemplate = group
+    // The menu backdrop level was built before the GLB arrived — rebuild it
+    // so the hero lanterns show immediately (only safe while in the menu).
+    if (world && state === 'menu') buildLevel(levelIndex)
+  },
+  undefined,
+  () => { /* load failed — procedural fallback stays in place */ },
+)
+
 function rand(a, b) { return a + Math.random() * (b - a) }
 
 // --- level world builder ---------------------------------------------------------
@@ -379,6 +425,7 @@ let world = null
 
 function disposeObject(root) {
   root.traverse((o) => {
+    if (o.userData.heroLantern) return // shared GLB geometry/materials — never dispose
     if (o.geometry) o.geometry.dispose()
     if (o.material) {
       const mats = Array.isArray(o.material) ? o.material : [o.material]
@@ -397,27 +444,39 @@ function makeLantern(g, x, z, withLight, lanternLights, lanternGlows) {
   )
   pole.position.y = 1.7
   g.add(pole)
-  const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(0.38, 12, 10),
-    new THREE.MeshStandardMaterial({ color: 0xff9a2a, emissive: 0xff8c1a, emissiveIntensity: 2.4 }),
-  )
-  bulb.position.y = 3.55
-  g.add(bulb)
-  const cap = new THREE.Mesh(
-    new THREE.ConeGeometry(0.5, 0.35, 8),
-    new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.6, metalness: 0.7 }),
-  )
-  cap.position.y = 3.95
-  g.add(cap)
+  // Lantern head at the top of the pole (same height as the old bulb).
+  const HEAD_Y = 3.55
+  if (lanternTemplate) {
+    // Hero lantern body (TRELLIS.2 GLB) — clone shares geometry/materials
+    // with the template, so it is cheap; centred on HEAD_Y, its base
+    // overlaps the pole top so it sits on the post.
+    const hero = lanternTemplate.clone()
+    hero.position.y = HEAD_Y
+    g.add(hero)
+  } else {
+    // Procedural fallback (also used if the GLB failed to load).
+    const bulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.38, 12, 10),
+      new THREE.MeshStandardMaterial({ color: 0xff9a2a, emissive: 0xff8c1a, emissiveIntensity: 2.4 }),
+    )
+    bulb.position.y = HEAD_Y
+    g.add(bulb)
+    const cap = new THREE.Mesh(
+      new THREE.ConeGeometry(0.5, 0.35, 8),
+      new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.6, metalness: 0.7 }),
+    )
+    cap.position.y = 3.95
+    g.add(cap)
+  }
   // soft radial glow sprite — the "fog lifts" halo around each lantern
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }))
-  glow.position.y = 3.55
+  glow.position.y = HEAD_Y
   glow.scale.setScalar(3.2)
   g.add(glow)
   lanternGlows.push(glow)
   if (withLight) {
     const light = new THREE.PointLight(0xff9a2a, 34, 26, 2)
-    light.position.y = 3.55
+    light.position.y = HEAD_Y
     g.add(light)
     lanternLights.push(light)
   }
@@ -922,6 +981,7 @@ window.__game = {
   get pos() { return { x: posX, z: posZ } },
   get speed() { return speed },
   get modelLoaded() { return modelLoaded },
+  get lanternHero() { return !!lanternTemplate },
   get boatChildren() { return boat.children.length },
   warp(x, z) { posX = x; posZ = z },
   setTimeScale(v) { timeScale = v },
